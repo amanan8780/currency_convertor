@@ -6,8 +6,10 @@ services:
     ports:
       - '8080:80'
     volumes:
-      - ./proxy.conf:/usr/local/apache2/conf/extra/proxy.conf
-      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf
-      - ./:/usr/local/apache2/htdocs
+      - ./proxy/proxy.conf:/usr/local/apache2/conf/extra/proxy.conf
+      - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ./html:/usr/local/apache2/htdocs
+      - ./js:/usr/local/apache2/htdocs/js
+
     environment:
       - HTTPD__Include__1=/usr/local/apache2/conf/extra/proxy.conf
