@@ -20,12 +20,12 @@ let defaultCurrency = {
     fromCurrency: {
         name: "Euro",
         code: "EUR",
-        rate: 100
+        rate: 1
     },
     toCurrency: {
         name: "United States Dollar",
         code: "USD",
-        rate: 10.0035
+        rate: 1.095
     }
 }
 
@@ -43,16 +43,10 @@ window.onload = function() {
 
 //  * Attach an event listener to the `fromAmount` element and call `fetchFixerAPI()` when the 'input' event is triggered.
 
-fromAmount.addEventListener('input', function () {
-
-    // Check if the value is valid
-    if (!isNaN(parseFloat(fromAmount.value)) && parseFloat(fromAmount.value) !== 0) {
-        // Call the fetchFixerAPI() function
-        fetchFixerAPI();
-    } else {
-        // Display an error message or take appropriate action
-        console.error('Invalid From amount');
-    }
+fromAmount.addEventListener('input', async function (event) {
+    console.log(event.target.value);
+    let eventValue = event.target.value
+    await resetCurrencyAPI(eventValue);
 });
 
 
@@ -63,7 +57,7 @@ fromAmount.addEventListener('input', function () {
  * @param {Array} options - An array of objects representing the options.
  * @param {string} defaultValue - The default value for the select element.
  */
-function populateSelectOptions(selectId, options, defaultValue) {
+async function populateSelectOptions(selectId, options, defaultValue) {
     const selectElement = document.getElementById(selectId);
 
     options.forEach(option => {
@@ -75,7 +69,7 @@ function populateSelectOptions(selectId, options, defaultValue) {
 
     selectElement.value = defaultValue;
 
-    selectElement.onchange = function() {
+    selectElement.onchange = async function() {
         const selectedOption = selectElement.options[selectElement.selectedIndex];
 
         if (selectId === "from-currency") {
@@ -84,7 +78,13 @@ function populateSelectOptions(selectId, options, defaultValue) {
         } else {
             defaultCurrency.toCurrency.name = selectedOption.textContent;
             defaultCurrency.toCurrency.code = selectedOption.value;
+
         }
+        console.log(selectId)
+        await resetCurrencyAPI();
+        await propagateInitialDataSet();
+        
+        console.log("propagateInitialDataSet = ",defaultCurrency)
     };
 }
 
@@ -107,9 +107,19 @@ function propagateInitialDataSet() {
     fromAmount.value = defaultCurrency.fromCurrency.rate;
     toAmount.value = defaultCurrency.toCurrency.rate;
 
+
+    let toAmountRate = 0;
+    
+    if (defaultCurrency.fromCurrency.code === 'EUR') {
+        toAmountRate = defaultCurrency.toCurrency.rate;
+        console.log("toAmountRate = ",defaultCurrency.toCurrency)
+    } else {
+        toAmountRate = (defaultCurrency.fromCurrency.rate / defaultCurrency.toCurrency.rate).toFixed(3);
+    }
+
     // Set labels for currency conversion
     fromCurrencyLabel.innerText = `1 ${defaultCurrency.fromCurrency.name} equals`;
-    toCurrencyLabel.innerText = `${defaultCurrency.toCurrency.rate} ${defaultCurrency.toCurrency.name}`;
+    toCurrencyLabel.innerText = `${toAmountRate} ${defaultCurrency.toCurrency.name}`;
 
     // Set formatted date and time
     const date = new Date();
@@ -132,7 +142,7 @@ function propagateInitialDataSet() {
  * @param {Object} params - The parameters for the API request.
  * @return {Promise<void>} - A promise that resolves when the API request is complete.
  */
-async function fetchFixerAPI() {
+async function fetchFixerAPI(FromInputValue = 1) {
     const apiURL = `http://localhost:8080/data/2023-08-03?access_key=a50ec07dee55da67833df781eb7b740d&symbols=${defaultCurrency.fromCurrency.code},${defaultCurrency.toCurrency.code}`;
 
     try {
@@ -144,10 +154,14 @@ async function fetchFixerAPI() {
             defaultCurrency.fromCurrency.rate = data.rates[defaultCurrency.fromCurrency.code];
             defaultCurrency.toCurrency.rate = data.rates[defaultCurrency.toCurrency.code];
 
+            fromAmount.value = FromInputValue;
+            
+            console.log(fromAmount)
+
             if (defaultCurrency.fromCurrency.code === 'EUR') {
-                toAmount.value = (parseFloat(fromAmount.value) * defaultCurrency.toCurrency.rate).toFixed(3);
+                toAmount.value = await (parseFloat(fromAmount.value) * defaultCurrency.toCurrency.rate).toFixed(3);
             } else {
-                toAmount.value = (parseFloat(fromAmount.value) * (defaultCurrency.toCurrency.rate / defaultCurrency.fromCurrency.rate)).toFixed(3);
+                toAmount.value = await (parseFloat(fromAmount.value) * (defaultCurrency.toCurrency.rate / defaultCurrency.fromCurrency.rate)).toFixed(3);
             }
 
             console.log(defaultCurrency);
@@ -157,5 +171,21 @@ async function fetchFixerAPI() {
     } catch (error) {
         console.error('Error:', error);
         // Display appropriate error message to the user
+    }
+}
+
+
+/**
+ * Resets the currency API.
+ *
+ * @return {undefined} No return value.
+ */
+
+async function resetCurrencyAPI(FromInputValue) {
+    const fromAmountValue = parseFloat(fromAmount.value);
+    if (!isNaN(fromAmountValue) && fromAmountValue !== 0) {
+        await fetchFixerAPI(FromInputValue);
+    } else {
+        console.error('Invalid From amount');
     }
 }
