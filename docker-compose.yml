@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  apache:
+    image: httpd:latest
+    container_name: my-apache-app
+    ports:
+      - '8080:80'
+    volumes:
+      - ./proxy.conf:/usr/local/apache2/conf/extra/proxy.conf
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ./:/usr/local/apache2/htdocs
+    environment:
+      - HTTPD__Include__1=/usr/local/apache2/conf/extra/proxy.conf
