@@ -54,4 +54,4 @@ This application fetches data from the [Fixer.io](https://fixer.io) API to get t
 - An intuitive and user-friendly UI.
 
 ## Contact
-GitHub: [abubakarmani1](https://github.com/abubakarmani1)
+GitHub: [amanan8780](https://github.com/amanan8780)
